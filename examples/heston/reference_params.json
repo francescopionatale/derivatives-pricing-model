@@ -1,0 +1,10 @@
+{
+  "params": {
+    "kappa": 2.0,
+    "theta": 0.04,
+    "sigma_v": 0.3,
+    "rho": -0.7,
+    "v0": 0.04
+  },
+  "source": "synthetic reference"
+}

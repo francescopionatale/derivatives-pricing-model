@@ -1,0 +1,78 @@
+{
+  "current_greeks": {
+    "delta": 120.0,
+    "gamma": -40.0,
+    "vega": -65.0,
+    "vanna": -10.0
+  },
+  "available_instruments": [
+    {
+      "name": "ATM Call",
+      "delta": 0.52,
+      "gamma": 0.021,
+      "vega": 0.39,
+      "vanna": 0.012
+    },
+    {
+      "name": "OTM Put",
+      "delta": -0.31,
+      "gamma": 0.014,
+      "vega": 0.28,
+      "vanna": -0.008
+    },
+    {
+      "name": "Straddle",
+      "delta": 0.01,
+      "gamma": 0.039,
+      "vega": 0.71,
+      "vanna": 0.001
+    }
+  ],
+  "target_constraints": {
+    "delta": 0.0,
+    "gamma": 0.0
+  },
+  "factor_penalties": {
+    "vega": 4.0,
+    "vanna": 6.0,
+    "volga": 2.0
+  },
+  "transaction_costs": [
+    0.03,
+    0.04,
+    0.05
+  ],
+  "bounds": [
+    [
+      -2000,
+      2000
+    ],
+    [
+      -2000,
+      2000
+    ],
+    [
+      -2000,
+      2000
+    ]
+  ],
+  "gross_limit": 2000,
+  "risk_aversion": 3.0,
+  "factor_covariance": [
+    [
+      1.0,
+      0.15,
+      0.1
+    ],
+    [
+      0.15,
+      1.0,
+      0.2
+    ],
+    [
+      0.1,
+      0.2,
+      1.0
+    ]
+  ]
+}
