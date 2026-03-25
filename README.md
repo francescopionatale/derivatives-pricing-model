@@ -1,4 +1,4 @@
-### Derivatives Pricing CLI
+# Derivatives Pricing CLI
 
 A quantitative finance toolkit for derivatives pricing, stochastic-volatility simulation, hedging, stress testing, volatility calibration, exotic options, and portfolio risk optimization. This repository is maintained as a **Python CLI/package**. The previous frontend scaffold has been removed so the codebase stays focused and consistent.
 
