@@ -24,7 +24,6 @@ graph TD
     end
 
     subgraph ENG["Engines Layer"]
-        direction LR
         SIM["Simulation\ngbm · heston"]
         PRC["Pricing\nbs · binomial · heston · exotics · implied_vol"]
         CAL["Calibration\nsurface · heston"]
@@ -71,7 +70,7 @@ graph LR
         ch["calibrate-heston"]
         hs["hedge-sim"]
         sr["stress-run"]
-        or_["optimize-risk"]
+        optR["optimize-risk"]
         hv["hist-vol"]
     end
 
@@ -112,7 +111,7 @@ graph LR
     ch --> CW --> chq --> hmc
     hs --> HW --> gbm & shp & sdh & ves
     sr --> SW --> gbm & shp & stu & sdh & ves
-    or_ --> RW --> op
+    optR --> RW --> op
     hv --> HVW --> lhp
 ```
 
@@ -173,7 +172,7 @@ graph LR
     subgraph PricingWorkflow
         rbs["run_bs()"] --> bse["bs_price_and_greeks\nimplied_volatility\nplot_greeks"]
         rmc["run_mc()"] --> gbm["simulate_gbm_paths"]
-        rhp["run_heston()"] --> hmc["heston_vanilla_price_mc\n→ simulate_heston_paths"]
+        rhp["run_heston()"] --> hmc["heston_vanilla_price_mc\nsimulate_heston_paths"]
         rbi["run_binomial()"] --> bin["binomial_price_and_greeks\nplot_greeks"]
         rba["run_barrier()"] --> bar["price_barrier_mc\nprice_barrier_heston_mc"]
         rlb["run_lookback()"] --> lbk["price_lookback_mc\nprice_lookback_heston_mc"]
