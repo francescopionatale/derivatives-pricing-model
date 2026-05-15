@@ -1,6 +1,6 @@
 #!/usr/bin/env python3
 """
-Entrypoint for the quant-derivatives CLI.
+Entrypoint for the derivatives-pricing-model CLI.
 Supports both running from the repository root and as an installed package.
 """
 from __future__ import annotations
@@ -13,7 +13,7 @@ SRC_DIR = REPO_ROOT / "src"
 if SRC_DIR.exists():
     sys.path.insert(0, str(SRC_DIR))
 
-from quant_derivatives.cli.main import main
+from derivatives_pricing_model.cli.main import main
 
 if __name__ == "__main__":
     raise SystemExit(main())

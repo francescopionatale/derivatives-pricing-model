@@ -1,7 +1,7 @@
 import pytest
 import numpy as np
-from quant_derivatives.engines.pricing.black_scholes import bs_price_and_greeks
-from quant_derivatives.engines.pricing.binomial import binomial_price
+from derivatives_pricing_model.engines.pricing.black_scholes import bs_price_and_greeks
+from derivatives_pricing_model.engines.pricing.binomial import binomial_price
 
 def test_bs_call_price():
     res = bs_price_and_greeks(S=100, K=100, T=1.0, r=0.05, sigma=0.2, is_call=True)

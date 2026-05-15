@@ -1,1 +1,0 @@
-"""Quant Derivatives Package"""

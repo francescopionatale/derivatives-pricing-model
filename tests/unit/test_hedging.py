@@ -1,6 +1,6 @@
 import numpy as np
-from quant_derivatives.engines.simulation.gbm import simulate_gbm_paths
-from quant_derivatives.engines.hedging.discrete_hedging import simulate_discrete_hedging
+from derivatives_pricing_model.engines.simulation.gbm import simulate_gbm_paths
+from derivatives_pricing_model.engines.hedging.discrete_hedging import simulate_discrete_hedging
 
 
 def test_hedging_pnl_mean_near_zero():

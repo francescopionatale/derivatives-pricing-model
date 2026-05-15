@@ -1,6 +1,6 @@
-# Derivatives Pricing CLI
+# Derivatives Pricing Model
 
-A quantitative finance toolkit for derivatives pricing, stochastic-volatility simulation, hedging, stress testing, volatility calibration, exotic options, and portfolio risk optimization. This repository is maintained as a **Python CLI/package**. The previous frontend scaffold has been removed so the codebase stays focused and consistent.
+A quantitative finance toolkit for derivatives pricing, stochastic-volatility simulation, hedging, stress testing, volatility calibration, exotic options, and portfolio risk optimization.
 
 The `pyproject.toml` file is the source of truth for packaging and installation metadata; `requirements.txt` mirrors the same runtime dependencies for convenience.
 
@@ -12,6 +12,27 @@ The `pyproject.toml` file is the source of truth for packaging and installation 
 - **Calibration**: Implied volatility calculation, surface smoothing, static no-arbitrage checks, and Heston parameter calibration to vanilla quotes.
 - **Risk Optimization**: Portfolio hedge optimization under linear neutrality constraints and quadratic residual-risk penalties.
 - **Terminal-first Output**: Results are printed in the terminal; plots are shown only when the backend is interactive.
+
+## CLI Reference
+
+The full CLI reference documenting all commands, arguments, and architecture is available in [`docs/CLI_REFERENCE.md`](docs/CLI_REFERENCE.md).
+
+Quick overview of available commands:
+
+| Command | Description | Engine |
+| --- | --- | --- |
+| `bs-price` | Black-Scholes analytical pricing + Greeks | `bs_price_and_greeks` |
+| `binomial-price` | Binomial tree (CRR) pricing | `binomial_price` |
+| `mc-price` | Monte Carlo pricing under GBM | `PricingWorkflow.run_mc` |
+| `heston-price` | Monte Carlo pricing under Heston SV | `heston_vanilla_price_mc` |
+| `barrier-price` | Barrier option pricing (GBM or Heston) | `price_barrier_mc` / `price_barrier_heston_mc` |
+| `lookback-price` | Lookback option pricing (GBM or Heston) | `price_lookback_mc` / `price_lookback_heston_mc` |
+| `calibrate-surface` | IV surface + no-arbitrage checks | `calibrate_surface_with_smoothing` |
+| `calibrate-heston` | Heston parameter fitting to vanilla quotes | `calibrate_heston_to_quotes` |
+| `hedge-sim` | Discrete delta hedging simulation | `simulate_discrete_hedging` |
+| `stress-run` | Stress testing with VaR/ES | `calculate_var_es` |
+| `optimize-risk` | Portfolio Greek neutrality optimization | `optimize_portfolio` |
+| `hist-vol` | Historical realized volatility | `HistoricalVolWorkflow.run` |
 
 ## Installation
 
@@ -36,7 +57,7 @@ pip install -r requirements.txt
 After package installation, the console entry point is available as:
 
 ```bash
-quant-derivatives --help
+derivatives-pricing-model --help
 ```
 
 ## Usage
@@ -47,7 +68,7 @@ quant-derivatives --help
 python main.py bs-price --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2
 
 # The installed console script works the same way
-quant-derivatives bs-price --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2
+derivatives-pricing-model bs-price --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2
 
 # Black-Scholes put
 python main.py bs-price --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2 --put
@@ -126,8 +147,8 @@ Notes:
 
 ## Project Structure
 
-- `src/quant_derivatives/engines/`: Core mathematical models and calibration engines.
-- `src/quant_derivatives/workflows/`: Orchestration of pricing, hedging, stress, calibration, and optimization tasks.
-- `src/quant_derivatives/utils/`: Logging, validation, and Heston-parameter helpers.
+- `src/derivatives_pricing_model/engines/`: Core mathematical models and calibration engines.
+- `src/derivatives_pricing_model/workflows/`: Orchestration of pricing, hedging, stress, calibration, and optimization tasks.
+- `src/derivatives_pricing_model/utils/`: Logging, validation, and Heston-parameter helpers.
 - `examples/`: Runnable command examples and sample calibration/optimization payloads.
 - `tests/`: Unit and integration tests.

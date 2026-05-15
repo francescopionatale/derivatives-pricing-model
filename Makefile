@@ -10,7 +10,7 @@ test-integration:
 
 lint:
 	python -m compileall -q src tests
-	PYTHONPATH=src python -c "import quant_derivatives; print(quant_derivatives.__name__)"
+	PYTHONPATH=src python3 -c "import derivatives_pricing_model; print(derivatives_pricing_model.__name__)"
 	pytest --collect-only -q >/dev/null
 
 run-bs:

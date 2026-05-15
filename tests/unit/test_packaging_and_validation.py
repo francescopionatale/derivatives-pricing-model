@@ -1,12 +1,12 @@
 from pathlib import Path
 
-from quant_derivatives.engines.pricing.black_scholes import bs_price_and_greeks
+from derivatives_pricing_model.engines.pricing.black_scholes import bs_price_and_greeks
 
 
 def test_main_uses_installable_package_import():
     main_text = Path('main.py').read_text()
-    assert 'from quant_derivatives.cli.main import main' in main_text
-    assert 'src.quant_derivatives' not in main_text
+    assert 'from derivatives_pricing_model.cli.main import main' in main_text
+    assert 'src.derivatives_pricing_model' not in main_text
 
 
 def test_black_scholes_supports_zero_maturity():

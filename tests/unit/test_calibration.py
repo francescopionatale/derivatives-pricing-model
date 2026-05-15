@@ -1,5 +1,5 @@
 import numpy as np
-from quant_derivatives.engines.calibration.surface import check_no_arbitrage
+from derivatives_pricing_model.engines.calibration.surface import check_no_arbitrage
 
 def test_arbitrage_detection():
     strikes = np.array([90, 100, 110])
