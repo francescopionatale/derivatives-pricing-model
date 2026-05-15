@@ -141,26 +141,27 @@ sequenceDiagram
     participant User
     participant CLI
     participant CW as CalibrationWorkflow
-    participant Loader as io/loaders
-    participant Opt as calibration/heston
-    participant HV as engines/pricing/heston_vanilla
-    participant Sim as engines/simulation/heston
-    participant Exo as engines/pricing/exotics
+    participant Loader as io.loaders
+    participant CalHeston as calibration.heston
+    participant HestonVanilla as pricing.heston_vanilla
+    participant SimHeston as simulation.heston
+    participant Exotics as pricing.exotics
 
     User->>CLI: calibrate-heston --input-csv quotes.csv --output-json params.json
     CLI->>CW: run_heston_calibration(args)
-    CW->>Loader: load_quotes_csv(path) → List[OptionQuote]
-    CW->>Opt: calibrate_heston_to_quotes(quotes) [L-BFGS-B optimizer]
-    Opt->>HV: heston_vanilla_price_mc() [per iteration]
-    HV->>Sim: simulate_heston_paths()
-    Opt-->>CW: (κ, θ, σᵥ, ρ, v₀) + RMSE
+    CW->>Loader: load_quotes_csv(path)
+    Loader-->>CW: List[OptionQuote]
+    CW->>CalHeston: calibrate_heston_to_quotes(quotes) [L-BFGS-B]
+    CalHeston->>HestonVanilla: heston_vanilla_price_mc() [per iteration]
+    HestonVanilla->>SimHeston: simulate_heston_paths()
+    CalHeston-->>CW: kappa, theta, sigma_v, rho, v0 + RMSE
     CW-->>User: params.json + RMSE report
 
     User->>CLI: barrier-price --model heston --params-json params.json
     CLI->>CW: run_barrier(args)
-    CW->>Exo: price_barrier_heston_mc(params)
-    Exo->>Sim: simulate_heston_paths()
-    Exo-->>User: Barrier option price ± std error
+    CW->>Exotics: price_barrier_heston_mc(params)
+    Exotics->>SimHeston: simulate_heston_paths()
+    Exotics-->>User: Barrier option price + std error
 ```
 
 ---
