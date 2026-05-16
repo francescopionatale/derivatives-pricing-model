@@ -2,6 +2,21 @@
 import argparse
 
 
+def add_plot_args(parser: argparse.ArgumentParser):
+    parser.add_argument(
+        "--save-plots",
+        type=str,
+        default=None,
+        metavar="DIR",
+        help="Save all plots as PNG files at 300 DPI in this directory",
+    )
+    parser.add_argument(
+        "--no-plots",
+        action="store_true",
+        help="Suppress all graphical output",
+    )
+
+
 def add_standard_market_args(parser: argparse.ArgumentParser, *, require_sigma: bool = True):
     parser.add_argument("--S0", type=float, required=True, help="Spot price")
     parser.add_argument("--K", type=float, required=True, help="Strike price")

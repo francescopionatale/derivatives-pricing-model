@@ -26,10 +26,14 @@ def simulate_discrete_hedging(
     transaction_cost: float = 0.0,
     implied_vol_path: np.ndarray | None = None,
     ewma_lambda: float = 0.94,
+    track_paths: bool = False,
 ) -> dict:
     """
     Simulates discrete delta hedging and attributes P&L into theta, gamma, vega,
     vanna, volga, transaction costs, and residual/slippage.
+
+    When track_paths=True, also returns cumulative_pnl_paths of shape (n_steps, n_paths)
+    tracking the running attributed P&L at each rebalancing step.
     """
     validate_option_params(paths[0, 0], K, T, sigma)
     if transaction_cost < 0:
@@ -56,6 +60,9 @@ def simulate_discrete_hedging(
     realized_vols = np.zeros(n_paths)
     avg_proxy_vols = np.zeros(n_paths)
 
+    if track_paths:
+        cumulative_pnl_paths = np.zeros((n_steps, n_paths))
+
     for i in range(n_paths):
         path = paths[:, i]
         sigma_path = implied_vol_path[:, i]
@@ -68,6 +75,7 @@ def simulate_discrete_hedging(
         vanna_pnl = 0.0
         volga_pnl = 0.0
         total_costs = 0.0
+        running_attributed = 0.0
 
         prev_greeks = None
         prev_S = path[0]
@@ -91,11 +99,24 @@ def simulate_discrete_hedging(
                 d_sigma = sigma_t - prev_sigma
                 d_sigma_points = d_sigma * 100.0
 
-                theta_pnl += prev_greeks["theta"] * 365.0 * dt
-                gamma_pnl += 0.5 * prev_greeks["gamma"] * dS ** 2
-                vega_pnl += prev_greeks["vega"] * d_sigma_points
-                vanna_pnl += prev_greeks.get("vanna", 0.0) * dS * d_sigma_points
-                volga_pnl += 0.5 * prev_greeks.get("volga", 0.0) * (d_sigma_points ** 2)
+                _dtheta = prev_greeks["theta"] * 365.0 * dt
+                _dgamma = 0.5 * prev_greeks["gamma"] * dS ** 2
+                _dvega = prev_greeks["vega"] * d_sigma_points
+                _dvanna = prev_greeks.get("vanna", 0.0) * dS * d_sigma_points
+                _dvolga = 0.5 * prev_greeks.get("volga", 0.0) * (d_sigma_points ** 2)
+
+                theta_pnl += _dtheta
+                gamma_pnl += _dgamma
+                vega_pnl += _dvega
+                vanna_pnl += _dvanna
+                volga_pnl += _dvolga
+
+                if track_paths:
+                    running_attributed += _dtheta + _dgamma + _dvega + _dvanna + _dvolga
+
+            if track_paths:
+                running_attributed -= cost
+                cumulative_pnl_paths[t + 1, i] = running_attributed
 
             prev_greeks = greeks
             prev_S = S
@@ -126,7 +147,7 @@ def simulate_discrete_hedging(
         realized_vols[i] = realized_vol
         avg_proxy_vols[i] = float(np.mean(sigma_path))
 
-    return {
+    result = {
         "total_pnl": total_pnls,
         "theta_pnl": theta_pnls,
         "gamma_pnl": gamma_pnls,
@@ -138,3 +159,8 @@ def simulate_discrete_hedging(
         "realized_vol": realized_vols,
         "avg_proxy_implied_vol": avg_proxy_vols,
     }
+
+    if track_paths:
+        result["cumulative_pnl_paths"] = cumulative_pnl_paths
+
+    return result

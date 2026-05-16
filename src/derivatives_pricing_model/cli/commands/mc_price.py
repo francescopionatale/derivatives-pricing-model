@@ -1,4 +1,4 @@
-from derivatives_pricing_model.cli.parser import add_standard_market_args
+from derivatives_pricing_model.cli.parser import add_standard_market_args, add_plot_args
 from derivatives_pricing_model.workflows.pricing_workflow import PricingWorkflow
 
 def setup_parser(subparsers):
@@ -8,6 +8,7 @@ def setup_parser(subparsers):
     parser.add_argument("--n-steps", type=int, default=252, help="Time steps per path")
     parser.add_argument("--seed", type=int, default=None, help="Random seed")
     parser.add_argument("--antithetic", action="store_true", help="Use antithetic variates")
+    add_plot_args(parser)
 
 def run(args):
     wf = PricingWorkflow("mc-price", args)

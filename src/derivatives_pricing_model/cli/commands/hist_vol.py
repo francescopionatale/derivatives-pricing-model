@@ -1,3 +1,4 @@
+from derivatives_pricing_model.cli.parser import add_plot_args
 from derivatives_pricing_model.workflows.historical_vol_workflow import HistoricalVolWorkflow
 
 def setup_parser(subparsers):
@@ -6,6 +7,7 @@ def setup_parser(subparsers):
     parser.add_argument("--date-col", type=str, default="date", help="Name of the date column")
     parser.add_argument("--price-col", type=str, default="price", help="Name of the price column")
     parser.add_argument("--window", type=int, default=21, help="Rolling window size in days (default: 21)")
+    add_plot_args(parser)
 
 def run(args):
     wf = HistoricalVolWorkflow("hist-vol", args)

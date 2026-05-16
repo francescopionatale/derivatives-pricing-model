@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from derivatives_pricing_model.workflows.base import BaseWorkflow
 from derivatives_pricing_model.engines.simulation.gbm import simulate_gbm_paths
 from derivatives_pricing_model.engines.pricing.black_scholes import bs_price_and_greeks
@@ -11,7 +12,11 @@ from derivatives_pricing_model.engines.pricing.exotics import (
     price_lookback_mc,
     price_lookback_heston_mc,
 )
-from derivatives_pricing_model.visualization.plots import plot_greeks
+from derivatives_pricing_model.visualization.plots import (
+    plot_greek_curves,
+    plot_payoff_diagram,
+    plot_mc_convergence,
+)
 from derivatives_pricing_model.utils.heston_params import load_heston_params_json
 
 
@@ -39,6 +44,13 @@ class PricingWorkflow(BaseWorkflow):
         return float(args.sigma)
 
     def run_mc(self, args):
+        from derivatives_pricing_model.visualization import theme
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         sigma = self._require_sigma_for_gbm(args)
         paths = simulate_gbm_paths(args.S0, args.r, sigma, args.T, args.n_steps, args.M, args.seed, args.antithetic)
         payoffs = np.maximum(paths[-1] - args.K, 0) if args.is_call else np.maximum(args.K - paths[-1], 0)
@@ -61,9 +73,28 @@ class PricingWorkflow(BaseWorkflow):
 
         self.logger.info(f"MC Price: {price:.4f} +/- {1.96*std_err:.4f}")
         self.logger.info(f"MC Settings: steps={args.n_steps}, paths={args.M}, seed={args.seed}, antithetic={args.antithetic}")
+
+        if plots_enabled:
+            n = np.arange(1, len(discounted_payoffs) + 1)
+            cum_sum = np.cumsum(discounted_payoffs)
+            cum_sum_sq = np.cumsum(discounted_payoffs ** 2)
+            cum_prices = cum_sum / n
+            cum_mean = cum_sum / n
+            cum_var = np.maximum(cum_sum_sq / n - cum_mean ** 2, 0.0)
+            cum_stderr = np.sqrt(cum_var / n)
+            bs_ref = bs_price_and_greeks(args.S0, args.K, args.T, args.r, sigma, args.is_call)["price"]
+            plot_mc_convergence(cum_prices, cum_stderr, analytical_price=bs_ref)
+
         return res
 
     def run_bs(self, args):
+        from derivatives_pricing_model.visualization import theme
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         sigma = self._require_sigma_for_gbm(args)
         res = bs_price_and_greeks(args.S0, args.K, args.T, args.r, sigma, args.is_call)
 
@@ -77,7 +108,11 @@ class PricingWorkflow(BaseWorkflow):
         self.logger.info(
             f"BS Greeks: Delta={res['delta']:.4f}, Gamma={res['gamma']:.4f}, Vega={res['vega']:.4f}, Theta={res['theta']:.4f}, Rho={res['rho']:.4f}"
         )
-        plot_greeks(res)
+
+        if plots_enabled:
+            plot_greek_curves(args.S0, args.K, args.T, args.r, sigma, args.is_call)
+            plot_payoff_diagram(args.S0, args.K, res["price"], args.is_call)
+
         return res
 
     def run_heston(self, args):
@@ -193,11 +228,22 @@ class PricingWorkflow(BaseWorkflow):
         return res
 
     def run_binomial(self, args):
+        from derivatives_pricing_model.visualization import theme
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         sigma = self._require_sigma_for_gbm(args)
         res = binomial_price_and_greeks(args.S0, args.K, args.T, args.r, sigma, args.n_steps, args.is_call)
         self.logger.info(f"Binomial Price: {res['price']:.4f}")
         self.logger.info(
             f"Binomial Greeks: Delta={res['delta']:.4f}, Gamma={res['gamma']:.4f}, Vega={res['vega']:.4f}, Theta={res['theta']:.4f}, Rho={res['rho']:.4f}"
         )
-        plot_greeks(res)
+
+        if plots_enabled:
+            plot_greek_curves(args.S0, args.K, args.T, args.r, sigma, args.is_call)
+            plot_payoff_diagram(args.S0, args.K, res["price"], args.is_call)
+
         return res

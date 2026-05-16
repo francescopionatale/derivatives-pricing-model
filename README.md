@@ -12,6 +12,7 @@ The `pyproject.toml` file is the source of truth for packaging and installation 
 - **Calibration**: Implied volatility calculation, surface smoothing, static no-arbitrage checks, and Heston parameter calibration to vanilla quotes.
 - **Risk Optimization**: Portfolio hedge optimization under linear neutrality constraints and quadratic residual-risk penalties.
 - **Terminal-first Output**: Results are printed in the terminal; plots are shown only when the backend is interactive.
+- **Visualization**: Deribit/viridis-style charts with Greek sensitivity curves, MC convergence, hedging path fan charts, P&L attribution, stress scenario comparison, and payoff diagrams. All visualization commands support `--save-plots <directory>` to export PNG files at 300 DPI and `--no-plots` to suppress graphical output entirely.
 
 ## CLI Reference
 

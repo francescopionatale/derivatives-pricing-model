@@ -1,4 +1,4 @@
-from derivatives_pricing_model.cli.parser import add_standard_market_args, add_heston_args
+from derivatives_pricing_model.cli.parser import add_standard_market_args, add_heston_args, add_plot_args
 from derivatives_pricing_model.workflows.stress_workflow import StressWorkflow
 
 def setup_parser(subparsers):
@@ -12,6 +12,7 @@ def setup_parser(subparsers):
     parser.add_argument("--spot-shock", type=float, default=-0.10, help="Relative finite spot shock for dedicated stress scenario")
     parser.add_argument("--vol-shock", type=float, default=0.05, help="Absolute volatility shock for dedicated stress scenario")
     add_heston_args(parser)
+    add_plot_args(parser)
 
 def run(args):
     wf = StressWorkflow("stress-run", args)

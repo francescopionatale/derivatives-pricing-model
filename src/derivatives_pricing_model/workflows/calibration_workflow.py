@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from derivatives_pricing_model.workflows.base import BaseWorkflow
 from derivatives_pricing_model.io.loaders import load_quotes_csv
 from derivatives_pricing_model.engines.pricing.implied_vol import implied_volatility
@@ -14,6 +15,13 @@ from derivatives_pricing_model.visualization.plots import plot_implied_vol_surfa
 
 class CalibrationWorkflow(BaseWorkflow):
     def run(self, args):
+        from derivatives_pricing_model.visualization import theme
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         self.logger.info(f"Loading quotes from {args.input_csv}")
         quotes = load_quotes_csv(args.input_csv)
 
@@ -73,7 +81,7 @@ class CalibrationWorkflow(BaseWorkflow):
         else:
             self.logger.info("No static arbitrage issues found.")
 
-        if len(strikes) > 0:
+        if len(strikes) > 0 and plots_enabled:
             iv_array = np.array(implied_vols)
             valid = np.isfinite(iv_array)
             if np.count_nonzero(valid) >= 3:
@@ -89,7 +97,7 @@ class CalibrationWorkflow(BaseWorkflow):
             else:
                 plot_implied_vol_surface(np.array(strikes), np.array(maturities), iv_array)
 
-            plot_implied_vol_smile(np.array(strikes), np.array(maturities), iv_array)
+            plot_implied_vol_smile(np.array(strikes), np.array(maturities), iv_array, args.S0)
 
         return output
 

@@ -1,4 +1,4 @@
-from derivatives_pricing_model.cli.parser import add_heston_calibration_args
+from derivatives_pricing_model.cli.parser import add_heston_calibration_args, add_plot_args
 from derivatives_pricing_model.workflows.calibration_workflow import CalibrationWorkflow
 
 
@@ -8,6 +8,7 @@ def setup_parser(subparsers):
     parser.add_argument("--S0", type=float, required=True, help="Spot price")
     parser.add_argument("--r", type=float, required=True, help="Risk-free rate")
     add_heston_calibration_args(parser)
+    add_plot_args(parser)
 
 
 def run(args):

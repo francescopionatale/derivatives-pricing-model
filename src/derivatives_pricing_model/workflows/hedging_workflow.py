@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from derivatives_pricing_model.workflows.base import BaseWorkflow
 from derivatives_pricing_model.engines.simulation.gbm import simulate_gbm_paths, simulate_gbm_paths_student_t
 from derivatives_pricing_model.engines.simulation.heston import simulate_heston_paths
@@ -9,8 +10,9 @@ from derivatives_pricing_model.visualization.plots import (
     plot_pnl_surface,
     plot_pnl_3d_surface,
     plot_pnl_comparison,
-    plot_pnl_vs_initial_spot,
-    plot_pnl_comparison_side_by_side,
+    plot_pnl_vs_final_spot,
+    plot_pnl_attribution,
+    plot_hedging_paths,
 )
 from derivatives_pricing_model.utils.heston_params import load_heston_params_json
 
@@ -105,6 +107,13 @@ class HedgingWorkflow(BaseWorkflow):
         }
 
     def run(self, args):
+        from derivatives_pricing_model.visualization import theme
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         self.logger.info(f"Simulating baseline hedging paths under model={args.model}...")
         paths_base, vol_path_base, hedge_sigma_base = self._generate_paths(args, stressed=False)
 
@@ -113,13 +122,15 @@ class HedgingWorkflow(BaseWorkflow):
 
         self.logger.info("Running discrete delta hedging simulation (Baseline)...")
         res_base = simulate_discrete_hedging(
-            paths_base, args.K, args.T, args.r, hedge_sigma_base, args.is_call, args.cost, implied_vol_path=vol_path_base
+            paths_base, args.K, args.T, args.r, hedge_sigma_base, args.is_call, args.cost,
+            implied_vol_path=vol_path_base, track_paths=plots_enabled,
         )
         pnls_base = res_base["total_pnl"]
 
         self.logger.info("Running discrete delta hedging simulation (Stress)...")
         res_stress = simulate_discrete_hedging(
-            paths_stress, args.K, args.T, args.r, hedge_sigma_stress, args.is_call, args.cost, implied_vol_path=vol_path_stress
+            paths_stress, args.K, args.T, args.r, hedge_sigma_stress, args.is_call, args.cost,
+            implied_vol_path=vol_path_stress,
         )
         pnls_stress = res_stress["total_pnl"]
 
@@ -137,16 +148,16 @@ class HedgingWorkflow(BaseWorkflow):
             f"VaR 95%: {metrics_stress['var_95']:.4f}, ES 95%: {metrics_stress['es_95']:.4f}"
         )
 
-        plot_pnl_distribution(pnls_base)
-        plot_pnl_distribution(pnls_stress)
-        plot_pnl_comparison(pnls_base, pnls_stress)
-        plot_pnl_comparison_side_by_side(pnls_base, pnls_stress)
-
-        s0_array = np.full_like(pnls_base, args.S0)
-        plot_pnl_vs_initial_spot(s0_array, pnls_base)
-
-        final_spots_base = paths_base[-1, :]
-        plot_pnl_surface(final_spots_base, pnls_base)
-        plot_pnl_3d_surface(final_spots_base, pnls_base)
+        if plots_enabled:
+            final_spots_base = paths_base[-1, :]
+            plot_pnl_distribution(pnls_base)
+            plot_pnl_distribution(pnls_stress)
+            plot_pnl_vs_final_spot(final_spots_base, pnls_base, args.K)
+            plot_pnl_surface(final_spots_base, pnls_base, strike=args.K)
+            plot_pnl_3d_surface(final_spots_base, pnls_base)
+            plot_pnl_attribution(res_base)
+            plot_pnl_comparison(pnls_base, pnls_stress)
+            if "cumulative_pnl_paths" in res_base:
+                plot_hedging_paths(res_base["cumulative_pnl_paths"])
 
         return res

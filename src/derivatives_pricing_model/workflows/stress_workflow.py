@@ -1,4 +1,5 @@
 import numpy as np
+from pathlib import Path
 from derivatives_pricing_model.workflows.base import BaseWorkflow
 from derivatives_pricing_model.engines.simulation.gbm import simulate_gbm_paths
 from derivatives_pricing_model.engines.simulation.heston import simulate_heston_paths
@@ -94,6 +95,14 @@ class StressWorkflow(BaseWorkflow):
         }
 
     def run(self, args):
+        from derivatives_pricing_model.visualization import theme
+        from derivatives_pricing_model.visualization.plots import plot_stress_scenario_comparison
+
+        if getattr(args, "save_plots", None):
+            Path(args.save_plots).mkdir(parents=True, exist_ok=True)
+            theme.SAVE_DIR = args.save_plots
+        plots_enabled = not getattr(args, "no_plots", False)
+
         scenarios = ["gaussian", "student_t", "spot_vol_shock", "short_convexity"]
         results = {}
         for scenario in scenarios:
@@ -108,4 +117,8 @@ class StressWorkflow(BaseWorkflow):
         self.logger.info(f"Student-t / stressed ES 95%: {results['student_t']['es_95']:.4f}")
         self.logger.info(f"Finite spot-vol shock VaR 95%: {results['spot_vol_shock']['var_95']:.4f}")
         self.logger.info(f"Short-convexity ES 95%: {results['short_convexity']['es_95']:.4f}")
+
+        if plots_enabled:
+            plot_stress_scenario_comparison(results)
+
         return results

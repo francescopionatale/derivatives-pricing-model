@@ -403,6 +403,43 @@ derivatives-pricing-model hist-vol --input-csv prices.csv --window 21
 
 ---
 
+## Visualization
+
+All commands that generate plots support two additional flags:
+
+| Flag | Description |
+| --- | --- |
+| `--save-plots <directory>` | Save all plots as PNG files at 300 DPI in the specified directory |
+| `--no-plots` | Suppress all graphical output |
+
+### Available Visualizations
+
+| Command | Plots Generated |
+| --- | --- |
+| `bs-price` | Greek sensitivity curves (Delta, Gamma, Vega, Theta, Rho, Vanna vs spot), payoff diagram with breakeven |
+| `binomial-price` | Greek sensitivity curves, payoff diagram with breakeven |
+| `mc-price` | Monte Carlo convergence plot with 95% CI band and BS analytical benchmark |
+| `calibrate-surface` | 3D implied volatility surface (cubic interpolation), volatility smile by moneyness per maturity |
+| `hedge-sim` | P&L distribution with VaR tail shading, P&L attribution waterfall, hedging path fan chart, P&L vs final spot (binned with CI band), P&L density hexbin, 3D P&L surface, baseline vs stress comparison |
+| `stress-run` | Scenario comparison (VaR/ES grouped bar chart across Gaussian, Student-t, spot/vol shock, short convexity) |
+| `hist-vol` | Rolling realized volatility with underlying price overlay and high-vol regime shading |
+
+A consolidated multi-page PDF of all plots (using synthetic seeded data) can be generated with:
+
+```bash
+PYTHONPATH=src python scripts/generate_visualizations_report.py
+# Output: output/visualizations.pdf
+```
+
+Example usage of CLI flags:
+
+```bash
+derivatives-pricing-model hedge-sim --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2 --n-steps 252 --M 1000 --cost 0.001 --save-plots output/plots
+derivatives-pricing-model hedge-sim --S0 100 --K 100 --T 1.0 --r 0.05 --sigma 0.2 --n-steps 252 --M 1000 --cost 0.001 --no-plots
+```
+
+---
+
 ## End-to-End Pipeline: Calibration → Exotic Pricing
 
 ```mermaid
