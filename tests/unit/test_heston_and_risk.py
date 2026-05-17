@@ -1,7 +1,7 @@
 import numpy as np
 
-from derivatives_pricing_model.engines.pricing.heston_vanilla import heston_vanilla_price_mc
-from derivatives_pricing_model.engines.risk.optimization import optimize_portfolio
+from engines.pricing.heston_vanilla import heston_vanilla_price_mc
+from engines.risk.optimization import optimize_portfolio
 
 
 def test_heston_price_is_positive_and_reports_feller():

@@ -1,5 +1,5 @@
-from derivatives_pricing_model.engines.pricing.black_scholes import bs_price_and_greeks
-from derivatives_pricing_model.engines.pricing.exotics import (
+from engines.pricing.black_scholes import bs_price_and_greeks
+from engines.pricing.exotics import (
     price_barrier_mc,
     price_barrier_heston_mc,
     price_lookback_mc,

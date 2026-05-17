@@ -17,7 +17,7 @@ dependencies = [
 
 
 [project.scripts]
-derivatives-pricing-model = "derivatives_pricing_model.cli.main:main"
+derivatives-pricing-model = "cli.main:main"
 
 [tool.setuptools]
 package-dir = {"" = "src"}

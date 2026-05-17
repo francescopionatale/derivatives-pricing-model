@@ -1,11 +1,11 @@
 from pathlib import Path
 
-from derivatives_pricing_model.engines.pricing.black_scholes import bs_price_and_greeks
+from engines.pricing.black_scholes import bs_price_and_greeks
 
 
 def test_main_uses_installable_package_import():
     main_text = Path('main.py').read_text()
-    assert 'from derivatives_pricing_model.cli.main import main' in main_text
+    assert 'from cli.main import main' in main_text
     assert 'src.derivatives_pricing_model' not in main_text
 
 

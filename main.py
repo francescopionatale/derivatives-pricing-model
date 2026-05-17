@@ -13,7 +13,7 @@ SRC_DIR = REPO_ROOT / "src"
 if SRC_DIR.exists():
     sys.path.insert(0, str(SRC_DIR))
 
-from derivatives_pricing_model.cli.main import main
+from cli.main import main
 
 if __name__ == "__main__":
     raise SystemExit(main())
