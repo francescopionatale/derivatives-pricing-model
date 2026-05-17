@@ -33,7 +33,7 @@ graph TD
     end
 
     subgraph SUP["Support"]
-        IO["IO\nloaders"]
+        IO["data_io\nloaders"]
         VIZ["Visualization\nplots"]
         UTL["Utils\nvalidation · heston_params · logging"]
         MDL["Models\ndomain"]
@@ -473,7 +473,7 @@ derivatives-pricing-model lookback-price --model heston --params-json params.jso
 
 ## Argument Parsing Infrastructure
 
-The CLI uses shared utility functions in `src/derivatives_pricing_model/cli/parser.py` to inject standard argument groups:
+The CLI uses shared utility functions in `src/cli/parser.py` to inject standard argument groups:
 
 | Utility Function | Purpose | Key Arguments |
 | --- | --- | --- |

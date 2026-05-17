@@ -148,8 +148,23 @@ Notes:
 
 ## Project Structure
 
-- `src/derivatives_pricing_model/engines/`: Core mathematical models and calibration engines.
-- `src/derivatives_pricing_model/workflows/`: Orchestration of pricing, hedging, stress, calibration, and optimization tasks.
-- `src/derivatives_pricing_model/utils/`: Logging, validation, and Heston-parameter helpers.
-- `examples/`: Runnable command examples and sample calibration/optimization payloads.
-- `tests/`: Unit and integration tests.
+```
+src/
+├── cli/              # Argument parser, dispatcher, and per-command modules
+├── engines/          # Core mathematical models
+│   ├── pricing/      # Black-Scholes, Binomial, Monte Carlo, Heston, exotics, implied vol
+│   ├── simulation/   # GBM and Heston path generators
+│   ├── calibration/  # IV surface smoothing and Heston calibration
+│   ├── hedging/      # Discrete delta hedging engine
+│   ├── stress/       # Scenario generation, VaR, Expected Shortfall
+│   └── risk/         # Portfolio Greek optimization
+├── workflows/        # Orchestration of pricing, hedging, stress, calibration, and risk tasks
+├── visualization/    # Deribit/viridis theme and all 15 plot functions
+├── utils/            # Logging, validation, and Heston-parameter helpers
+├── data_io/          # CSV/JSON loaders and serializers
+├── models/           # Domain and result data classes
+├── configs/          # Configuration dataclasses
+└── reporting/        # Markdown report generation
+examples/             # Sample CSV/JSON inputs for calibration and risk commands
+tests/                # Unit, integration, and regression test suites
+```
