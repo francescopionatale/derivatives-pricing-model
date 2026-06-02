@@ -1,5 +1,6 @@
-from cli.parser import add_standard_market_args, add_heston_args, add_plot_args
+from cli.parser import add_heston_args, add_plot_args, add_standard_market_args
 from workflows.hedging_workflow import HedgingWorkflow
+
 
 def setup_parser(subparsers):
     parser = subparsers.add_parser("hedge-sim", help="Discrete delta hedging simulation")

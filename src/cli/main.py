@@ -1,4 +1,5 @@
 import argparse
+
 from cli.commands import (
     barrier_price,
     binomial_price,

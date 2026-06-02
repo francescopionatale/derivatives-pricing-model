@@ -1,7 +1,7 @@
 import numpy as np
 
-from engines.simulation.heston import simulate_heston_paths, check_feller_condition
-from utils.validation import validate_option_params, validate_simulation_params, validate_heston_params
+from engines.simulation.heston import check_feller_condition, simulate_heston_paths
+from utils.validation import validate_heston_params, validate_option_params, validate_simulation_params
 
 
 def heston_vanilla_price_mc(

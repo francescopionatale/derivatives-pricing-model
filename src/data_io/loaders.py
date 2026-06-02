@@ -1,11 +1,10 @@
-from typing import List
 
 import pandas as pd
 
 from models.domain import OptionQuote
 
 
-def load_quotes_csv(filepath: str) -> List[OptionQuote]:
+def load_quotes_csv(filepath: str) -> list[OptionQuote]:
     df = pd.read_csv(filepath)
     required = {"strike", "maturity", "mid_price"}
     missing = required - set(df.columns)

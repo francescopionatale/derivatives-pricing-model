@@ -1,5 +1,5 @@
 from dataclasses import dataclass
-from typing import Optional
+
 
 @dataclass
 class OptionContract:
@@ -18,6 +18,6 @@ class OptionQuote:
     strike: float
     maturity: float
     mid_price: float
-    bid: Optional[float] = None
-    ask: Optional[float] = None
+    bid: float | None = None
+    ask: float | None = None
     is_call: bool = True

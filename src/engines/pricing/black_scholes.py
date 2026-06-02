@@ -1,5 +1,6 @@
 import numpy as np
 from scipy.stats import norm
+
 from utils.validation import validate_option_params
 
 

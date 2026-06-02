@@ -1,6 +1,8 @@
 from scipy.optimize import brentq
+
 from engines.pricing.black_scholes import bs_price_and_greeks
 from utils.validation import validate_option_params
+
 
 def implied_volatility(target_price: float, S: float, K: float, T: float, r: float, is_call: bool = True) -> float:
     """

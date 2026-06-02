@@ -1,5 +1,6 @@
-from cli.parser import add_standard_market_args, add_plot_args
+from cli.parser import add_plot_args, add_standard_market_args
 from workflows.pricing_workflow import PricingWorkflow
+
 
 def setup_parser(subparsers):
     parser = subparsers.add_parser("bs-price", help="Black-Scholes pricing and Greeks")

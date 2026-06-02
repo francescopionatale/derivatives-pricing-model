@@ -1,6 +1,5 @@
 import subprocess
 import sys
-from pathlib import Path
 
 
 def test_heston_cli_accepts_params_json_without_sigma(tmp_path):
