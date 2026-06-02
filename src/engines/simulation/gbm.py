@@ -9,36 +9,78 @@ from utils.validation import validate_option_params, validate_simulation_params
 SeedLike = int | SeedSequence | None
 
 
-def simulate_gbm_paths(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, seed: SeedLike = None, antithetic: bool = False) -> np.ndarray:
+def simulate_gbm_paths(
+    S0: float,
+    r: float,
+    sigma: float,
+    T: float,
+    n_steps: int,
+    n_paths: int,
+    seed: SeedLike = None,
+    antithetic: bool = False,
+    quasi_mc: bool = False,
+    moment_matching: bool = False,
+) -> np.ndarray:
     """
     Simulates Geometric Brownian Motion paths.
     Returns array of shape (n_steps + 1, n_paths).
 
-    Randomness uses numpy's modern Generator (np.random.default_rng) so calls are
-    reproducible and isolated from global RNG state.
+    Parameters
+    ----------
+    quasi_mc:
+        If True, use Sobol low-discrepancy normals instead of pseudo-random draws.
+    moment_matching:
+        If True, adjust Z so each time-step has sample mean=0 and std=1.
     """
-    validate_option_params(S0, 1.0, T, sigma) # K is not used here
+    validate_option_params(S0, 1.0, T, sigma)  # K is not used here
     validate_simulation_params(n_steps, n_paths)
-
-    rng = np.random.default_rng(seed)
 
     dt = T / n_steps
     paths = np.zeros((n_steps + 1, n_paths))
     paths[0] = S0
 
-    if antithetic:
+    if quasi_mc:
+        from engines.simulation.variance_reduction import sobol_standard_normal
+
         n_half = n_paths // 2
-        Z = rng.standard_normal((n_steps, n_half))
-        Z = np.concatenate((Z, -Z), axis=1)
+        _seed = seed if isinstance(seed, int) else 0
+        if antithetic:
+            z_raw = sobol_standard_normal(n_dims=n_steps, n_points=n_half, seed=_seed)
+            Z = np.concatenate((z_raw.T, -z_raw.T), axis=1)
+        else:
+            z_raw = sobol_standard_normal(n_dims=n_steps, n_points=n_paths, seed=_seed)
+            Z = z_raw.T
     else:
-        Z = rng.standard_normal((n_steps, n_paths))
+        rng = np.random.default_rng(seed)
+        if antithetic:
+            n_half = n_paths // 2
+            z_half = rng.standard_normal((n_steps, n_half))
+            Z = np.concatenate((z_half, -z_half), axis=1)
+        else:
+            Z = rng.standard_normal((n_steps, n_paths))
+
+    if moment_matching:
+        from engines.simulation.variance_reduction import apply_moment_matching
+
+        Z = apply_moment_matching(Z)
 
     for step in range(1, n_steps + 1):
-        paths[step] = paths[step-1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z[step-1])
+        paths[step] = paths[step - 1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z[step - 1])
 
     return paths
 
-def simulate_gbm_paths_student_t(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, df: float = 3.0, seed: SeedLike = None, antithetic: bool = False) -> np.ndarray:
+
+def simulate_gbm_paths_student_t(
+    S0: float,
+    r: float,
+    sigma: float,
+    T: float,
+    n_steps: int,
+    n_paths: int,
+    df: float = 3.0,
+    seed: SeedLike = None,
+    antithetic: bool = False,
+) -> np.ndarray:
     """
     Simulates Geometric Brownian Motion paths using Student-t innovations for stress testing.
     Returns array of shape (n_steps + 1, n_paths).
@@ -61,6 +103,6 @@ def simulate_gbm_paths_student_t(S0: float, r: float, sigma: float, T: float, n_
         Z = rng.standard_t(df, size=(n_steps, n_paths)) * scale
 
     for step in range(1, n_steps + 1):
-        paths[step] = paths[step-1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z[step-1])
+        paths[step] = paths[step - 1] * np.exp((r - 0.5 * sigma**2) * dt + sigma * np.sqrt(dt) * Z[step - 1])
 
     return paths
