@@ -1,8 +1,7 @@
 from __future__ import annotations
 
-import math
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 from scipy.optimize import minimize
@@ -10,7 +9,7 @@ from scipy.optimize import minimize
 from engines.pricing.heston_vanilla import heston_vanilla_price_mc
 from engines.pricing.implied_vol import implied_volatility
 from models.domain import OptionQuote
-from utils.validation import validate_positive, validate_non_negative
+from utils.validation import validate_non_negative, validate_positive
 
 
 @dataclass
@@ -164,7 +163,8 @@ def calibrate_heston_to_quotes(
     weights = np.array([_quote_weight(q, weight_mode) for q in quotes], dtype=float)
     weights = weights / np.sum(weights)
 
-    objective = lambda x: _objective_from_vector(x, quotes, S0, r, weights, n_steps, n_paths, seed, antithetic)
+    def objective(x):
+        return _objective_from_vector(x, quotes, S0, r, weights, n_steps, n_paths, seed, antithetic)
 
     result = minimize(
         objective,
@@ -187,7 +187,7 @@ def calibrate_heston_to_quotes(
 
     iv_errors = []
     iv_rows = []
-    for q, model_price in zip(quotes, model_prices):
+    for q, model_price in zip(quotes, model_prices, strict=False):
         try:
             market_iv = implied_volatility(float(q.mid_price), S0, float(q.strike), float(q.maturity), r, bool(q.is_call))
             model_iv = implied_volatility(float(model_price), S0, float(q.strike), float(q.maturity), r, bool(q.is_call))

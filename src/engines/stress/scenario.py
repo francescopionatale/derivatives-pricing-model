@@ -1,5 +1,9 @@
 import numpy as np
+from numpy.random import SeedSequence
+
 from utils.validation import validate_option_params, validate_simulation_params
+
+SeedLike = int | SeedSequence | None
 
 
 def calculate_var_es(pnls: np.ndarray, confidence_level: float = 0.99) -> dict:
@@ -26,7 +30,7 @@ def calculate_var_es(pnls: np.ndarray, confidence_level: float = 0.99) -> dict:
     }
 
 
-def generate_student_t_paths(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, df: float, seed: int = None) -> np.ndarray:
+def generate_student_t_paths(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, df: float, seed: SeedLike = None) -> np.ndarray:
     """
     Simulates paths using standardized Student-t innovations for heavy tails.
     Requires df > 2 so the standardized innovations have finite variance.
@@ -36,14 +40,13 @@ def generate_student_t_paths(S0: float, r: float, sigma: float, T: float, n_step
     if df <= 2:
         raise ValueError("Degrees of freedom must be greater than 2 for finite variance")
 
-    if seed is not None:
-        np.random.seed(seed)
+    rng = np.random.default_rng(seed)
 
     dt = T / n_steps
     paths = np.zeros((n_steps + 1, n_paths))
     paths[0] = S0
 
-    Z = np.random.standard_t(df, size=(n_steps, n_paths))
+    Z = rng.standard_t(df, size=(n_steps, n_paths))
     Z = Z * np.sqrt((df - 2) / df)
 
     for t in range(1, n_steps + 1):
@@ -63,19 +66,18 @@ def apply_spot_vol_shock(S0: float, sigma: float, spot_shock: float, vol_shock: 
     return S_shocked, sigma_shocked
 
 
-def generate_short_convexity_scenario(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, seed: int = None) -> np.ndarray:
+def generate_short_convexity_scenario(S0: float, r: float, sigma: float, T: float, n_steps: int, n_paths: int, seed: SeedLike = None) -> np.ndarray:
     """
     Generates paths where realized volatility increases significantly when spot drops (negative correlation).
     This stresses portfolios that are short convexity (short gamma/vega).
     """
-    if seed is not None:
-        np.random.seed(seed)
+    rng = np.random.default_rng(seed)
 
     dt = T / n_steps
     paths = np.zeros((n_steps + 1, n_paths))
     paths[0] = S0
 
-    Z = np.random.standard_normal((n_steps, n_paths))
+    Z = rng.standard_normal((n_steps, n_paths))
 
     for t in range(1, n_steps + 1):
         local_vol = sigma * (S0 / paths[t - 1])**1.5

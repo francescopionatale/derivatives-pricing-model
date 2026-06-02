@@ -7,8 +7,8 @@ def check_no_arbitrage(
     maturities: np.ndarray,
     prices: np.ndarray,
     is_call: bool = True,
-    S0: float = None,
-    r: float = None,
+    S0: float | None = None,
+    r: float | None = None,
 ) -> list:
     """
     Performs discrete static no-arbitrage checks.
@@ -44,7 +44,7 @@ def check_no_arbitrage(
 
         if S0 is not None and r is not None:
             discount = np.exp(-r * T)
-            for strike, price in zip(K, P):
+            for strike, price in zip(K, P, strict=False):
                 if is_call:
                     lower = max(0.0, S0 - strike * discount)
                     upper = S0
@@ -77,7 +77,7 @@ def check_no_arbitrage(
 
 def check_put_call_parity(quotes, S0: float, r: float, tolerance: float = 1e-3) -> list:
     """Checks put-call parity where both call and put quotes are available for the same strike and maturity."""
-    grouped = {}
+    grouped: dict[tuple[float, float], dict[str, float]] = {}
     for q in quotes:
         key = (float(q.strike), float(q.maturity))
         grouped.setdefault(key, {})['C' if q.is_call else 'P'] = float(q.mid_price)
@@ -99,8 +99,8 @@ def calibrate_surface_with_smoothing(
     strikes: np.ndarray,
     maturities: np.ndarray,
     implied_vols: np.ndarray,
-    bid_ask_spreads: np.ndarray = None,
-    vega: np.ndarray = None,
+    bid_ask_spreads: np.ndarray | None = None,
+    vega: np.ndarray | None = None,
 ) -> tuple:
     """
     Builds a smoothed implied-volatility surface using weighted kernel smoothing.

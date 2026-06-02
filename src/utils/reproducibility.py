@@ -1,8 +1,8 @@
+import json
 import os
 import time
 import uuid
-import json
-import hashlib
+
 
 def create_run_dir() -> tuple[str, str, str]:
     timestamp = time.strftime("%Y%m%d_%H%M%S")
@@ -19,7 +19,7 @@ def create_run_dir() -> tuple[str, str, str]:
     
     return path, run_id, timestamp
 
-def save_manifest(run_dir: str, run_id: str, timestamp: str, command: str, args, seed: int = None):
+def save_manifest(run_dir: str, run_id: str, timestamp: str, command: str, args, seed: int | None = None):
     manifest = {
         "run_id": run_id,
         "timestamp": timestamp,
