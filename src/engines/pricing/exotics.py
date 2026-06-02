@@ -117,6 +117,7 @@ def price_barrier_heston_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Price a barrier option under Heston using discrete path monitoring."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -137,6 +138,7 @@ def price_barrier_heston_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     hit_barrier = np.any(paths >= barrier, axis=0) if is_up else np.any(paths <= barrier, axis=0)
@@ -263,6 +265,7 @@ def price_lookback_heston_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Price a lookback option under Heston using discrete path extrema."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -282,6 +285,7 @@ def price_lookback_heston_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     s_min = np.min(paths, axis=0)

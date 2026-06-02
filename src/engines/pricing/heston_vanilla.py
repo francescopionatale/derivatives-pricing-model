@@ -19,6 +19,7 @@ def heston_vanilla_price_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Monte Carlo pricing for a vanilla European option under Heston stochastic volatility."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -38,6 +39,7 @@ def heston_vanilla_price_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     terminal_spots = paths[-1]
