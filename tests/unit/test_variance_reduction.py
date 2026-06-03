@@ -1,14 +1,14 @@
 """Tests for variance reduction techniques: control variates, Sobol QMC, moment matching."""
 
 import numpy as np
+
+from engines.pricing.black_scholes import bs_price_and_greeks
+from engines.simulation.gbm import simulate_gbm_paths
 from engines.simulation.variance_reduction import (
     apply_moment_matching,
     mc_with_control_variate,
     sobol_standard_normal,
 )
-
-from engines.pricing.black_scholes import bs_price_and_greeks
-from engines.simulation.gbm import simulate_gbm_paths
 
 # ---------------------------------------------------------------------------
 # Shared test parameters

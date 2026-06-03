@@ -8,6 +8,8 @@ The two components are independent:
 """
 from __future__ import annotations
 
+from collections.abc import Callable
+
 import numpy as np
 from scipy.optimize import minimize
 
@@ -22,7 +24,7 @@ def dupire_local_vol(
     T: float,
     S0: float,
     r: float,
-    iv_surface: object,
+    iv_surface: Callable[[float, float], float],
     dK: float | None = None,
     dT: float | None = None,
 ) -> dict:

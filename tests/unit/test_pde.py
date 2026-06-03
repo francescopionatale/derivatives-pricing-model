@@ -1,7 +1,7 @@
 import numpy as np
-from engines.pricing.pde import bs_pde_price
 
 from engines.pricing.black_scholes import bs_price_and_greeks
+from engines.pricing.pde import bs_pde_price
 
 
 class TestBSPDE:
