@@ -106,6 +106,7 @@ class CalibrationWorkflow(BaseWorkflow):
     def run_heston_calibration(self, args):
         self.logger.info(f"Loading quotes from {args.input_csv}")
         quotes = load_quotes_csv(args.input_csv)
+        pricing_method = getattr(args, "pricing_method", "cos")
         result = calibrate_heston_to_quotes(
             quotes=quotes,
             S0=args.S0,
@@ -123,6 +124,7 @@ class CalibrationWorkflow(BaseWorkflow):
             },
             weight_mode=args.weight_mode,
             maxiter=args.maxiter,
+            pricing_method=pricing_method,
         ).to_dict()
 
         self.logger.info(

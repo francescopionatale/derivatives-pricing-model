@@ -46,6 +46,8 @@ def add_heston_calibration_args(parser: argparse.ArgumentParser):
     parser.add_argument("--maxiter", type=int, default=30, help="Maximum optimizer iterations")
     parser.add_argument("--weight-mode", choices=["spread", "uniform"], default="spread", help="Quote weighting scheme during calibration")
     parser.add_argument("--antithetic", action="store_true", help="Use antithetic variates during calibration")
+    parser.add_argument("--pricing-method", choices=["cos", "mc"], default="cos", dest="pricing_method",
+                        help="Pricing method inside the calibration loop: 'cos' (Fourier, fast default) or 'mc'")
     parser.add_argument("--init-kappa", type=float, default=2.0, help="Initial guess for kappa")
     parser.add_argument("--init-theta", type=float, default=0.04, help="Initial guess for theta")
     parser.add_argument("--init-sigma-v", dest="init_sigma_v", type=float, default=0.30, help="Initial guess for sigma_v")
