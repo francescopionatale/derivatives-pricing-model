@@ -9,6 +9,7 @@ from cli.commands import (
     bs_price,
     calibrate_heston,
     calibrate_surface,
+    dupire_surface,
     fourier_price,
     hedge_sim,
     heston_price,
@@ -18,6 +19,8 @@ from cli.commands import (
     merton_price,
     optimize_risk,
     pde_heston_price,
+    sabr_calibrate,
+    sabr_vol,
     stress_run,
 )
 
@@ -43,6 +46,9 @@ def main():
     american_price.setup_parser(subparsers)
     merton_price.setup_parser(subparsers)
     pde_heston_price.setup_parser(subparsers)
+    sabr_vol.setup_parser(subparsers)
+    sabr_calibrate.setup_parser(subparsers)
+    dupire_surface.setup_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -78,5 +84,11 @@ def main():
         merton_price.run(args)
     elif args.command == "heston-pde-price":
         pde_heston_price.run(args)
+    elif args.command == "sabr-vol":
+        sabr_vol.run(args)
+    elif args.command == "sabr-calibrate":
+        sabr_calibrate.run(args)
+    elif args.command == "dupire-surface":
+        dupire_surface.run(args)
 
     return 0
