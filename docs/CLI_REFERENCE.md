@@ -403,6 +403,159 @@ derivatives-pricing-model hist-vol --input-csv prices.csv --window 21
 
 ---
 
+## Quant-Engine Commands (v0.2)
+
+The commands below use the new high-precision engines added in the quant upgrade.  They call engines directly (no heavyweight workflow wrapper needed) and all support `--output-json`.
+
+---
+
+### `fourier-price` — Heston Fourier Pricing (COS / Carr-Madan / Lewis)
+
+Prices a Heston European option via one or all three Fourier methods:
+- **COS** (Fang-Oosterlee 2008): N=256 cosine series, cumulant-based truncation. Fast default for calibration loops (~0.1 ms per strike strip).
+- **Carr-Madan** (1999): FFT with α-damping and Simpson weights; prices a full log-strike strip in one transform.
+- **Lewis** (2001): single `scipy.quad` integral; simplest independent cross-check.
+
+All three are mutually consistent to < 2 cents under standard parameters.
+
+**Arguments:** Standard market args (no `--sigma`) + Heston params + `--method {cos,carr-madan,lewis,all}`.
+
+```bash
+python main.py fourier-price --S0 100 --K 100 --T 1 --r 0.05 \
+  --kappa 2.0 --theta 0.04 --sigma-v 0.3 --rho -0.7 --v0 0.04 \
+  --method all
+
+python main.py fourier-price --S0 100 --K 100 --T 1 --r 0.05 \
+  --kappa 2.0 --theta 0.04 --sigma-v 0.3 --rho -0.7 --v0 0.04 \
+  --method cos --put --output-json heston_put.json
+```
+
+---
+
+### `american-price` — Longstaff-Schwartz American MC
+
+Prices an American option using Longstaff-Schwartz (2001) backward-induction Monte Carlo.
+Returns price, ±95 % confidence interval, standard error, early-exercise fraction, and the estimated exercise boundary.
+
+**Key property:** the LSM exercise strategy is sub-optimal → price is a *lower bound* on the true American price.
+
+**Arguments:** Standard market args + `--n-paths` (default 10000) + `--n-steps` (default 100) + `--poly-degree` (default 3) + `--seed`.
+
+```bash
+python main.py american-price --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2 --put \
+  --n-paths 50000 --n-steps 200 --seed 42
+
+# Cross-check: American call without dividends ≈ European call
+python main.py american-price --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2 \
+  --n-paths 20000 --seed 0
+```
+
+---
+
+### `merton-price` — Merton Jump-Diffusion
+
+Prices a European option under the Merton (1976) jump-diffusion model via Poisson-weighted Black-Scholes series (machine-precise for λT ≤ 20, truncated at `--n-terms`).
+
+**Arguments:** Standard market args + `--lam` (jump intensity) + `--mu-J` (mean log-jump) + `--sigma-J` (log-jump std) + `--n-terms`.
+
+```bash
+python main.py merton-price --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2 \
+  --lam 1.0 --mu-J -0.10 --sigma-J 0.15
+
+# With λ=0 this reduces to Black-Scholes
+python main.py merton-price --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2 --lam 0
+```
+
+---
+
+### `heston-pde-price` — Heston 2-D ADI PDE
+
+Prices a Heston European option by solving the 2-D Heston PDE on a (log-S, v) grid via Douglas-Rachford ADI splitting.  Uses a sinh-based non-uniform v-grid concentrated near v = 0.
+
+Cross-validates against `fourier-price --method cos` to within 1.5 % ATM.
+
+**Arguments:** Standard market args (no `--sigma`) + Heston params + `--Nx` + `--Nv` + `--Nt`.
+
+```bash
+python main.py heston-pde-price --S0 100 --K 100 --T 1 --r 0.05 \
+  --kappa 2.0 --theta 0.04 --sigma-v 0.3 --rho -0.7 --v0 0.04 \
+  --Nx 80 --Nv 40 --Nt 80
+```
+
+---
+
+### `sabr-vol` — SABR Implied Volatility
+
+Computes lognormal (Black) or normal (Bachelier) SABR implied volatility at a single strike via the Hagan (2002) formula.
+
+**Arguments:** `--F` (forward) + `--K` + `--T` + `--alpha` + `--beta` (default 0.5) + `--rho` + `--nu` + `--correction {hagan,obloj}` + `--normal`.
+
+```bash
+python main.py sabr-vol --F 100 --K 95 --T 1 --alpha 2.0 --beta 0.5 --rho -0.3 --nu 0.4
+
+# Normal SABR (for negative-rate environments)
+python main.py sabr-vol --F 0.01 --K 0.005 --T 2 --alpha 0.005 --rho -0.2 --nu 0.3 --normal
+```
+
+*Note:* With `beta=0.5` and `F=100`, `alpha` has units vol × F^(β−1) = vol × F^(−0.5).  To get ≈20% vol at F=100 with beta=0.5, use `alpha≈2.0`.
+
+---
+
+### `sabr-calibrate` — Calibrate SABR Smile
+
+Fits SABR parameters (α, ρ, ν) to a market smile with β fixed.  α is determined analytically from the ATM cubic at each (ρ, ν) candidate; ρ and ν are optimised via L-BFGS-B.
+
+**Arguments:** `--F` + `--T` + `--strikes '...'` (comma-separated) + `--vols '...'` (comma-separated implied vols) + `--beta`.
+
+```bash
+python main.py sabr-calibrate --F 100 --T 1 \
+  --strikes "90,95,100,105,110" \
+  --vols   "0.22,0.21,0.20,0.21,0.22" \
+  --beta 0.5 --output-json sabr_params.json
+```
+
+---
+
+### `dupire-surface` — Dupire Local Volatility
+
+Computes Dupire (1994) local volatility σ_loc(K, T) from an implied-vol surface using central finite differences in the Derman-Kani total-variance form.
+
+The current implementation takes a flat surface (constant σ); for a non-flat surface, call `dupire_local_vol` programmatically with a custom callable.
+
+**Arguments:** `--S0` + `--K` + `--T` + `--r` + `--sigma` (flat implied vol surface value).
+
+```bash
+python main.py dupire-surface --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2
+# For a flat surface: local vol ≈ implied vol = 20%
+
+python main.py dupire-surface --S0 100 --K 90 --T 0.5 --r 0.05 --sigma 0.25 \
+  --output-json local_vol.json
+```
+
+---
+
+## Fast Calibration Pipeline (v0.2)
+
+With COS-powered calibration, the entire Heston calibration loop runs in seconds instead of minutes:
+
+```bash
+# Step 1: Calibrate with COS (default, ~1000× faster than MC)
+python main.py calibrate-heston \
+  --input-csv examples/heston/synthetic_heston_quotes.csv \
+  --S0 100 --r 0.05 --maxiter 300 --output-json params.json
+
+# Step 2: Verify with Fourier cross-check
+python main.py fourier-price --S0 100 --K 100 --T 0.5 --r 0.05 \
+  --kappa 2.0 --theta 0.04 --sigma-v 0.3 --rho -0.7 --v0 0.04 \
+  --method all
+
+# Step 3: American option from calibrated vol
+python main.py american-price --S0 100 --K 100 --T 1 --r 0.05 --sigma 0.2 \
+  --put --n-paths 50000 --seed 42
+```
+
+---
+
 ## Visualization
 
 All commands that generate plots support two additional flags:
@@ -498,11 +651,18 @@ The CLI uses shared utility functions in `src/cli/parser.py` to inject standard 
 | `barrier_price` | `cli/commands/barrier_price.py` | Barrier option command |
 | `lookback_price` | `cli/commands/lookback_price.py` | Lookback option command |
 | `calibrate_surface` | `cli/commands/calibrate_surface.py` | IV surface calibration command |
-| `calibrate_heston` | `cli/commands/calibrate_heston.py` | Heston calibration command |
+| `calibrate_heston` | `cli/commands/calibrate_heston.py` | Heston calibration command (COS default) |
 | `hedge_sim` | `cli/commands/hedge_sim.py` | Hedging simulation command |
 | `stress_run` | `cli/commands/stress_run.py` | Stress testing command |
 | `optimize_risk` | `cli/commands/optimize_risk.py` | Portfolio optimization command |
 | `hist_vol` | `cli/commands/hist_vol.py` | Historical volatility command |
+| `fourier_price` | `cli/commands/fourier_price.py` | Heston Fourier pricing (COS/CM/Lewis) ★ |
+| `american_price` | `cli/commands/american_price.py` | Longstaff-Schwartz American MC ★ |
+| `merton_price` | `cli/commands/merton_price.py` | Merton jump-diffusion series ★ |
+| `pde_heston_price` | `cli/commands/pde_heston_price.py` | Heston 2-D ADI PDE ★ |
+| `sabr_vol` | `cli/commands/sabr_vol.py` | SABR implied vol (Hagan 2002) ★ |
+| `sabr_calibrate` | `cli/commands/sabr_calibrate.py` | SABR smile calibration ★ |
+| `dupire_surface` | `cli/commands/dupire_surface.py` | Dupire local vol at (K, T) ★ |
 
 ### Workflows Layer
 
@@ -524,13 +684,23 @@ The CLI uses shared utility functions in `src/cli/parser.py` to inject standard 
 | `heston_vanilla` | `engines/pricing/heston_vanilla.py` | `heston_vanilla_price_mc` |
 | `exotics` | `engines/pricing/exotics.py` | `price_barrier_mc`, `price_barrier_heston_mc`, `price_lookback_mc`, `price_lookback_heston_mc` |
 | `implied_vol` | `engines/pricing/implied_vol.py` | `implied_volatility` |
+| `heston_fourier` ★ | `engines/pricing/heston_fourier.py` | `heston_characteristic_function`, `heston_price_carr_madan`, `heston_price_cos`, `heston_price_lewis` |
+| `sabr` ★ | `engines/pricing/sabr.py` | `sabr_implied_vol`, `sabr_normal_vol`, `calibrate_sabr` |
+| `pde` ★ | `engines/pricing/pde.py` | `bs_pde_price`, `heston_pde_price` |
+| `american_mc` ★ | `engines/pricing/american_mc.py` | `american_option_lsm` |
+| `jump_diffusion` ★ | `engines/pricing/jump_diffusion.py` | `merton_characteristic_function`, `merton_price`, `simulate_merton_paths` |
+| `local_vol` ★ | `engines/pricing/local_vol.py` | `dupire_local_vol`, `calibrate_svi`, `check_svi_arbitrage` |
 | `gbm` | `engines/simulation/gbm.py` | `simulate_gbm_paths`, `simulate_gbm_paths_student_t` |
-| `heston` (sim) | `engines/simulation/heston.py` | `simulate_heston_paths`, `check_feller_condition` |
+| `heston` (sim) | `engines/simulation/heston.py` | `simulate_heston_paths`, `simulate_heston_paths_qe`, `simulate_heston_paths_euler`, `check_feller_condition` |
+| `variance_reduction` ★ | `engines/simulation/variance_reduction.py` | `mc_with_control_variate`, `sobol_standard_normal`, `apply_moment_matching` |
+| `jit` ★ | `engines/simulation/jit.py` | `maybe_jit`, `gbm_step_loop`, `heston_euler_step_loop` |
 | `surface` | `engines/calibration/surface.py` | `check_no_arbitrage`, `check_put_call_parity`, `calibrate_surface_with_smoothing` |
-| `heston` (cal) | `engines/calibration/heston.py` | `calibrate_heston_to_quotes` |
+| `heston` (cal) | `engines/calibration/heston.py` | `calibrate_heston_to_quotes` (default `pricing_method="cos"`) |
 | `discrete_hedging` | `engines/hedging/discrete_hedging.py` | `simulate_discrete_hedging` |
 | `scenario` | `engines/stress/scenario.py` | `calculate_var_es`, `generate_student_t_paths`, `apply_spot_vol_shock`, `generate_short_convexity_scenario` |
 | `optimization` | `engines/risk/optimization.py` | `optimize_portfolio` |
+
+*★ = added in v0.2 quant-engine upgrade*
 
 ### Support Layer
 
