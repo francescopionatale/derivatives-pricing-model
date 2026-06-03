@@ -1,17 +1,23 @@
+from __future__ import annotations
+
 import argparse
 
 from cli.commands import (
+    american_price,
     barrier_price,
     binomial_price,
     bs_price,
     calibrate_heston,
     calibrate_surface,
+    fourier_price,
     hedge_sim,
     heston_price,
     hist_vol,
     lookback_price,
     mc_price,
+    merton_price,
     optimize_risk,
+    pde_heston_price,
     stress_run,
 )
 
@@ -32,6 +38,11 @@ def main():
     barrier_price.setup_parser(subparsers)
     lookback_price.setup_parser(subparsers)
     optimize_risk.setup_parser(subparsers)
+    # Wave-2 engines
+    fourier_price.setup_parser(subparsers)
+    american_price.setup_parser(subparsers)
+    merton_price.setup_parser(subparsers)
+    pde_heston_price.setup_parser(subparsers)
 
     args = parser.parse_args()
 
@@ -59,5 +70,13 @@ def main():
         lookback_price.run(args)
     elif args.command == "optimize-risk":
         optimize_risk.run(args)
+    elif args.command == "fourier-price":
+        fourier_price.run(args)
+    elif args.command == "american-price":
+        american_price.run(args)
+    elif args.command == "merton-price":
+        merton_price.run(args)
+    elif args.command == "heston-pde-price":
+        pde_heston_price.run(args)
 
     return 0
