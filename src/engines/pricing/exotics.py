@@ -1,12 +1,12 @@
 import numpy as np
 
 from engines.simulation.gbm import simulate_gbm_paths
-from engines.simulation.heston import simulate_heston_paths, check_feller_condition
+from engines.simulation.heston import check_feller_condition, simulate_heston_paths
 from utils.validation import (
-    validate_option_params,
-    validate_simulation_params,
-    validate_positive,
     validate_heston_params,
+    validate_option_params,
+    validate_positive,
+    validate_simulation_params,
 )
 
 
@@ -40,7 +40,12 @@ def price_barrier_mc(
     validate_simulation_params(n_steps, n_paths)
     validate_positive(barrier, "barrier")
 
-    paths = simulate_gbm_paths(S0, r, sigma, T, n_steps, n_paths, seed, antithetic)
+    # Independent child streams: one for the GBM paths, one for the
+    # barrier-crossing (Brownian-bridge) uniform draws.
+    path_ss, bridge_ss = np.random.SeedSequence(seed).spawn(2)
+    bridge_rng = np.random.default_rng(bridge_ss)
+
+    paths = simulate_gbm_paths(S0, r, sigma, T, n_steps, n_paths, path_ss, antithetic)
     dt = T / n_steps
     hit_barrier = np.zeros(n_paths, dtype=bool)
 
@@ -62,7 +67,7 @@ def price_barrier_mc(
             )
             prob_hit[S_next <= barrier] = 1.0
 
-        random_draws = np.random.uniform(0.0, 1.0, n_paths)
+        random_draws = bridge_rng.uniform(0.0, 1.0, n_paths)
         hit_barrier |= random_draws < prob_hit
 
     terminal_spots = paths[-1]
@@ -112,6 +117,7 @@ def price_barrier_heston_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Price a barrier option under Heston using discrete path monitoring."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -132,6 +138,7 @@ def price_barrier_heston_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     hit_barrier = np.any(paths >= barrier, axis=0) if is_up else np.any(paths <= barrier, axis=0)
@@ -189,7 +196,11 @@ def price_lookback_mc(
     validate_option_params(S0, K, T, sigma)
     validate_simulation_params(n_steps, n_paths)
 
-    paths = simulate_gbm_paths(S0, r, sigma, T, n_steps, n_paths, seed, antithetic)
+    # Independent child streams: GBM paths vs. the extrema (Brownian-bridge) draws.
+    path_ss, bridge_ss = np.random.SeedSequence(seed).spawn(2)
+    bridge_rng = np.random.default_rng(bridge_ss)
+
+    paths = simulate_gbm_paths(S0, r, sigma, T, n_steps, n_paths, path_ss, antithetic)
     dt = T / n_steps
 
     s_min = np.full(n_paths, S0, dtype=float)
@@ -199,7 +210,7 @@ def price_lookback_mc(
         s_t = np.maximum(paths[t], 1e-12)
         s_next = np.maximum(paths[t + 1], 1e-12)
 
-        u = np.random.uniform(0.0, 1.0, n_paths)
+        u = bridge_rng.uniform(0.0, 1.0, n_paths)
         x_t = np.log(s_t)
         x_next = np.log(s_next)
         diff = x_next - x_t
@@ -254,6 +265,7 @@ def price_lookback_heston_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Price a lookback option under Heston using discrete path extrema."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -273,6 +285,7 @@ def price_lookback_heston_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     s_min = np.min(paths, axis=0)

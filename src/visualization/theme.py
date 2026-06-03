@@ -1,9 +1,10 @@
 """Global visualization theme — Deribit/viridis-inspired style with save infrastructure."""
 from __future__ import annotations
 
+from pathlib import Path
+
 import matplotlib
 import matplotlib.pyplot as plt
-from pathlib import Path
 
 SAVE_DIR: str | None = None
 PDF_OUTPUT = None  # type: matplotlib.backends.backend_pdf.PdfPages | None

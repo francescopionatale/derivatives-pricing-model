@@ -1,4 +1,3 @@
-import numpy as np
 
 from engines.pricing.heston_vanilla import heston_vanilla_price_mc
 from engines.risk.optimization import optimize_portfolio

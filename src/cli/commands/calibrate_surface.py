@@ -1,6 +1,7 @@
 from cli.parser import add_plot_args
 from workflows.calibration_workflow import CalibrationWorkflow
 
+
 def setup_parser(subparsers):
     parser = subparsers.add_parser("calibrate-surface", help="Calibrate implied vol surface")
     parser.add_argument("--input-csv", type=str, required=True, help="Path to quotes CSV")

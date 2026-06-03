@@ -1,5 +1,6 @@
 import logging
 
+
 def setup_logging() -> logging.Logger:
     logger = logging.getLogger("derivatives-pricing-model")
     logger.setLevel(logging.INFO)

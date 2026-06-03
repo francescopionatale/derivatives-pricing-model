@@ -1,6 +1,7 @@
 from cli.parser import add_plot_args
 from workflows.historical_vol_workflow import HistoricalVolWorkflow
 
+
 def setup_parser(subparsers):
     parser = subparsers.add_parser("hist-vol", help="Calculate historical realized volatility")
     parser.add_argument("--input-csv", type=str, required=True, help="Path to CSV with historical prices")

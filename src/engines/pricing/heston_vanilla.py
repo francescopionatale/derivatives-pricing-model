@@ -1,7 +1,7 @@
 import numpy as np
 
-from engines.simulation.heston import simulate_heston_paths, check_feller_condition
-from utils.validation import validate_option_params, validate_simulation_params, validate_heston_params
+from engines.simulation.heston import check_feller_condition, simulate_heston_paths
+from utils.validation import validate_heston_params, validate_option_params, validate_simulation_params
 
 
 def heston_vanilla_price_mc(
@@ -19,6 +19,7 @@ def heston_vanilla_price_mc(
     v0: float,
     seed: int | None = None,
     antithetic: bool = False,
+    scheme: str = "qe",
 ) -> dict:
     """Monte Carlo pricing for a vanilla European option under Heston stochastic volatility."""
     validate_option_params(S0, K, T, max(np.sqrt(max(v0, 1e-12)), 1e-6))
@@ -38,6 +39,7 @@ def heston_vanilla_price_mc(
         n_paths=n_paths,
         seed=seed,
         antithetic=antithetic,
+        scheme=scheme,
     )
 
     terminal_spots = paths[-1]

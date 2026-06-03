@@ -1,6 +1,7 @@
 import numpy as np
-from engines.simulation.gbm import simulate_gbm_paths
+
 from engines.hedging.discrete_hedging import simulate_discrete_hedging
+from engines.simulation.gbm import simulate_gbm_paths
 
 
 def test_hedging_pnl_mean_near_zero():

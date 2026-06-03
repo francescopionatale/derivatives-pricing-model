@@ -1,4 +1,9 @@
+from __future__ import annotations
+
+from typing import Any
+
 import numpy as np
+
 from engines.pricing.black_scholes import bs_price_and_greeks
 from utils.validation import validate_option_params
 
@@ -147,7 +152,7 @@ def simulate_discrete_hedging(
         realized_vols[i] = realized_vol
         avg_proxy_vols[i] = float(np.mean(sigma_path))
 
-    result = {
+    result: dict[str, Any] = {
         "total_pnl": total_pnls,
         "theta_pnl": theta_pnls,
         "gamma_pnl": gamma_pnls,
@@ -161,6 +166,6 @@ def simulate_discrete_hedging(
     }
 
     if track_paths:
-        result["cumulative_pnl_paths"] = cumulative_pnl_paths
+        result["cumulative_pnl_paths"] = cumulative_pnl_paths  # shape (n_steps, n_paths)
 
     return result

@@ -1,8 +1,8 @@
 import json
 from pathlib import Path
 
-from workflows.base import BaseWorkflow
 from engines.risk.optimization import optimize_portfolio
+from workflows.base import BaseWorkflow
 
 
 class RiskWorkflow(BaseWorkflow):

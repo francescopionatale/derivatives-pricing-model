@@ -1,5 +1,7 @@
 import numpy as np
+
 from utils.validation import validate_option_params, validate_simulation_params
+
 
 def binomial_price(S: float, K: float, T: float, r: float, sigma: float, n_steps: int, is_call: bool = True) -> float:
     """

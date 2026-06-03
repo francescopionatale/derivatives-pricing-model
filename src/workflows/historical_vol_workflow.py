@@ -1,8 +1,11 @@
-import numpy as np
 from pathlib import Path
-from workflows.base import BaseWorkflow
+
+import numpy as np
+
 from data_io.loaders import load_historical_prices
 from visualization.plots import plot_historical_volatility
+from workflows.base import BaseWorkflow
+
 
 class HistoricalVolWorkflow(BaseWorkflow):
     def run(self, args):

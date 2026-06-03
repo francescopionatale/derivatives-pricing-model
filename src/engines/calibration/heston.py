@@ -1,16 +1,16 @@
 from __future__ import annotations
 
-import math
+from collections.abc import Iterable
 from dataclasses import dataclass
-from typing import Iterable
 
 import numpy as np
 from scipy.optimize import minimize
 
+from engines.pricing.heston_fourier import heston_price_cos
 from engines.pricing.heston_vanilla import heston_vanilla_price_mc
 from engines.pricing.implied_vol import implied_volatility
 from models.domain import OptionQuote
-from utils.validation import validate_positive, validate_non_negative
+from utils.validation import validate_non_negative, validate_positive
 
 
 @dataclass
@@ -66,36 +66,61 @@ def _price_quotes_heston(
     n_paths: int,
     seed: int | None,
     antithetic: bool,
+    pricing_method: str = "cos",
 ) -> tuple[np.ndarray, list[dict]]:
+    """Price all quotes under the given Heston params.
+
+    pricing_method : {"cos", "mc"}
+        "cos"  — Fang-Oosterlee COS method (default, ~1000x faster than MC for calibration).
+        "mc"   — Monte Carlo (legacy; retained for comparison and stress-testing).
+    """
     model_prices = []
     per_quote = []
     for q in quotes:
-        res = heston_vanilla_price_mc(
-            S0=S0,
-            K=float(q.strike),
-            T=float(q.maturity),
-            r=r,
-            is_call=bool(q.is_call),
-            n_steps=n_steps,
-            n_paths=n_paths,
-            kappa=params["kappa"],
-            theta=params["theta"],
-            sigma_v=params["sigma_v"],
-            rho=params["rho"],
-            v0=params["v0"],
-            seed=seed,
-            antithetic=antithetic,
-        )
-        model_prices.append(res["price"])
+        if pricing_method == "cos":
+            res = heston_price_cos(
+                S0=S0,
+                K=float(q.strike),
+                T=float(q.maturity),
+                r=r,
+                is_call=bool(q.is_call),
+                kappa=params["kappa"],
+                theta=params["theta"],
+                sigma_v=params["sigma_v"],
+                rho=params["rho"],
+                v0=params["v0"],
+            )
+            price = res["price"]
+            std_err = 0.0
+        else:
+            res = heston_vanilla_price_mc(
+                S0=S0,
+                K=float(q.strike),
+                T=float(q.maturity),
+                r=r,
+                is_call=bool(q.is_call),
+                n_steps=n_steps,
+                n_paths=n_paths,
+                kappa=params["kappa"],
+                theta=params["theta"],
+                sigma_v=params["sigma_v"],
+                rho=params["rho"],
+                v0=params["v0"],
+                seed=seed,
+                antithetic=antithetic,
+            )
+            price = res["price"]
+            std_err = float(res["std_err"])
+        model_prices.append(price)
         per_quote.append(
             {
                 "strike": float(q.strike),
                 "maturity": float(q.maturity),
                 "is_call": bool(q.is_call),
                 "market_price": float(q.mid_price),
-                "model_price": float(res["price"]),
-                "abs_error": float(abs(res["price"] - q.mid_price)),
-                "std_err": float(res["std_err"]),
+                "model_price": float(price),
+                "abs_error": float(abs(price - q.mid_price)),
+                "std_err": std_err,
             }
         )
     return np.array(model_prices, dtype=float), per_quote
@@ -111,6 +136,7 @@ def _objective_from_vector(
     n_paths: int,
     seed: int | None,
     antithetic: bool,
+    pricing_method: str = "cos",
 ) -> float:
     params = {
         "kappa": float(x[0]),
@@ -119,7 +145,9 @@ def _objective_from_vector(
         "rho": float(x[3]),
         "v0": float(x[4]),
     }
-    model_prices, _ = _price_quotes_heston(quotes, S0, r, params, n_steps, n_paths, seed, antithetic)
+    model_prices, _ = _price_quotes_heston(
+        quotes, S0, r, params, n_steps, n_paths, seed, antithetic, pricing_method
+    )
     market_prices = np.array([float(q.mid_price) for q in quotes], dtype=float)
     errors = model_prices - market_prices
     weighted_mse = float(np.sum(weights * errors ** 2))
@@ -143,6 +171,7 @@ def calibrate_heston_to_quotes(
     bounds: dict | None = None,
     weight_mode: str = "spread",
     maxiter: int = 30,
+    pricing_method: str = "cos",
 ) -> HestonCalibrationResult:
     validate_positive(S0, "S0")
     validate_non_negative(r, "r")
@@ -164,7 +193,10 @@ def calibrate_heston_to_quotes(
     weights = np.array([_quote_weight(q, weight_mode) for q in quotes], dtype=float)
     weights = weights / np.sum(weights)
 
-    objective = lambda x: _objective_from_vector(x, quotes, S0, r, weights, n_steps, n_paths, seed, antithetic)
+    def objective(x):
+        return _objective_from_vector(
+            x, quotes, S0, r, weights, n_steps, n_paths, seed, antithetic, pricing_method
+        )
 
     result = minimize(
         objective,
@@ -181,13 +213,15 @@ def calibrate_heston_to_quotes(
         "rho": float(result.x[3]),
         "v0": float(result.x[4]),
     }
-    model_prices, per_quote = _price_quotes_heston(quotes, S0, r, params, n_steps, n_paths, seed, antithetic)
+    model_prices, per_quote = _price_quotes_heston(
+        quotes, S0, r, params, n_steps, n_paths, seed, antithetic, pricing_method
+    )
     market_prices = np.array([float(q.mid_price) for q in quotes], dtype=float)
     rmse_price = float(np.sqrt(np.mean((model_prices - market_prices) ** 2)))
 
     iv_errors = []
     iv_rows = []
-    for q, model_price in zip(quotes, model_prices):
+    for q, model_price in zip(quotes, model_prices, strict=False):
         try:
             market_iv = implied_volatility(float(q.mid_price), S0, float(q.strike), float(q.maturity), r, bool(q.is_call))
             model_iv = implied_volatility(float(model_price), S0, float(q.strike), float(q.maturity), r, bool(q.is_call))

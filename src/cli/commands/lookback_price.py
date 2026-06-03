@@ -1,6 +1,5 @@
-from cli.parser import add_standard_market_args, add_heston_args
+from cli.parser import add_heston_args, add_standard_market_args
 from workflows.pricing_workflow import PricingWorkflow
-
 
 
 def setup_parser(subparsers):

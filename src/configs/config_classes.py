@@ -1,10 +1,10 @@
 from dataclasses import dataclass
-from typing import Optional
+
 
 @dataclass
 class RunConfig:
     command: str
-    seed: Optional[int] = None
+    seed: int | None = None
 
 @dataclass
 class MarketConfig:

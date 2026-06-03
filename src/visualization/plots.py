@@ -1,15 +1,15 @@
 """Visualization plots for the derivatives pricing model."""
-import numpy as np
 import matplotlib.pyplot as plt
+import numpy as np
 
-from engines.stress.scenario import calculate_var_es
 from engines.pricing.black_scholes import bs_price_and_greeks
+from engines.stress.scenario import calculate_var_es
 from visualization.theme import (
-    apply_theme,
+    FIGSIZE,
+    PALETTE,
     _finalize,
     _strip_spines,
-    PALETTE,
-    FIGSIZE,
+    apply_theme,
 )
 
 
@@ -439,7 +439,7 @@ def plot_pnl_attribution(attribution_dict: dict) -> None:
 
     x_scale = max(abs(min(means, default=0.0)), abs(max(means, default=0.0)), abs(total_mean))
     offset = 0.002 * x_scale if x_scale > 0 else 0.001
-    for bar, val in zip(bars, means):
+    for bar, val in zip(bars, means, strict=False):
         ax.text(
             val + (offset if val >= 0 else -offset),
             bar.get_y() + bar.get_height() / 2,
